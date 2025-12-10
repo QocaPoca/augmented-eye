@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AUGMENTED EYE</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* ---------- GLOBAL HORROR THEME ---------- */
+body {
+  margin:0;
+  background:black;
+  color:red;
+  font-family: 'Courier New', monospace;
+  overflow-x:hidden;
+}
+
+/* Background negative Japanese text */
+body:before{
+  content:"呪い 死 影 闇 憎い 怖い 血 人形 破滅 苦痛 怨霊 狂気";
+  position:fixed; top:0; left:0;
+  width:100%; height:100%;
+  font-size:100px; opacity:0.03;
+  writing-mode:vertical-rl; transform:rotate(10deg);
+  pointer-events:none;
+}
+
+/* Nav */
+nav{
+  background:#111; padding:15px; display:flex; gap:20px;
+  justify-content:center; border-bottom:1px solid red;
+}
+nav a{ color:red; text-decoration:none; font-size:20px; }
+nav a:hover{ text-shadow:0 0 10px red; cursor:pointer; }
+
+/* header with mascot */
+.header-wrap{ display:flex; align-items:center; justify-content:center; gap:12px; margin-top:10px; }
+#mascotWrap{ display:flex; flex-direction:column; align-items:center; width:80px; }
+#mascot{ width:72px; height:auto; transition:transform .28s ease, filter .28s ease; transform-origin:center; }
+#mascotAlert{ color:red; font-weight:bold; margin-left:-12px; margin-top:-22px; font-size:20px; opacity:0; transform:translateY(-6px); transition:opacity .22s, transform .22s; text-shadow:0 0 6px rgba(255,0,0,0.8); }
+
+#title{ text-align:center; font-size:50px; margin-top:0; letter-spacing:5px; }
+#eye{ display:inline-block; width:40px; height:20px; border:3px solid red; border-radius:50%; position:relative; animation:blink 3s infinite; }
+#eye:after{ content:""; position:absolute; top:4px; left:12px; width:10px; height:10px; background:red; border-radius:50%; }
+@keyframes blink { 0%,90%,100%{height:20px;} 95%{height:2px;} }
+
+/* pages */
+.page{ display:none; padding:20px; }
+.active{ display:block; }
+
+/* particles canvas */
+#particles{ position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:-1; }
+
+/* decorations */
+.doll{ position:fixed; top:20px; width:80px; opacity:0.3; }
+#doll1{ left:20px; } #doll2{ right:20px; transform:scaleX(-1); }
+
+/* controls */
+button{ background:#200; color:red; border:1px solid red; padding:6px 14px; margin-top:6px; }
+button:hover{ background:#400; cursor:pointer; }
+
+img.post-img{ width:150px; margin:10px; }
+.preview{ max-width:200px; display:block; margin-top:8px; border:1px solid #330000; }
+
+table{ border-collapse:collapse; width:70%; margin:20px auto; color:red; }
+td,th{ border:1px solid red; padding:5px; text-align:center; }
+
+input, textarea{ background:black; border:1px solid red; color:red; padding:6px; outline:none; caret-color:red; }
+input[type="file"]{ background:transparent; border:1px dashed #330000; color:#f88; padding:8px; display:inline-block; cursor:pointer; }
+::placeholder{ color:#7a0000; opacity:0.9; }
+
+/* mascot reaction */
+.mascot-glow{ filter:drop-shadow(0 0 14px rgba(255,0,0,.55)); }
+@keyframes mascotShake {
+  0%{ transform:translateX(0); }20%{ transform:translateX(-4px);}40%{ transform:translateX(4px);}60%{ transform:translateX(-3px);}80%{ transform:translateX(2px);}100%{ transform:translateX(0);}
+}
+.mascot-shake{ animation:mascotShake .35s; }
+
+/* layout tweaks */
+.header-wrap > div { display:flex; align-items:center; }
+#mascotWrap { pointer-events:none; } /* decorative */
+</style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+
+<img id="doll1" class="doll" src="https://i.imgur.com/2gU4FvX.png" alt="">
+<img id="doll2" class="doll" src="https://i.imgur.com/2gU4FvX.png" alt="">
+
+<div class="header-wrap">
+  <div id="mascotWrap">
+    <img id="mascot" alt="mascot">
+    <div id="mascotAlert">!</div>
+  </div>
+  <div>
+    <div id="title">AUGMENTED <span id="eye"></span> EYE</div>
+  </div>
+</div>
+
+<nav>
+  <a onclick="showPage('home')">Home</a>
+  <a onclick="showPage('forum')">Forum</a>
+  <a onclick="showPage('chat')">Chat</a>
+  <a onclick="showPage('leaderboard')">Leaderboards</a>
+  <a onclick="showPage('about')">About</a>
+  <a onclick="showPage('account')">Account</a>
+</nav>
+
+<!-- PAGES -->
+<div id="home" class="page active">
+  <h1>Announcements</h1>
+  <div id="announceContainer"></div>
+  <h3>Admin Post (Images Only)</h3>
+  <div id="adminAnnounce"></div>
+</div>
+
+<div id="forum" class="page">
+  <h1>Forum — Text & Image Posts</h1>
+  <div id="forumPosts"></div>
+
+  <h3>Post</h3>
+  <label style="color:#f88;">Select image (optional):</label><br>
+  <input type="file" id="forumImg" accept="image/*"><br>
+  <img id="forumPreview" class="preview" style="display:none;">
+  <br>
+  <!-- Option C: Text box BELOW the image -->
+  <textarea id="forumText" placeholder="Write something..." rows="4" style="width:80%;"></textarea><br>
+  <button onclick="postForum()">Post</button>
+</div>
+
+<div id="chat" class="page">
+  <h1>Chatrooms</h1>
+  <select id="chatroomSelect" onchange="loadChatroom()">
+    <option>Channel 1</option><option>Channel 2</option><option>Channel 3</option><option>Channel 4</option><option>Channel 5</option>
+  </select>
+
+  <div id="chatWindow" style="border:1px solid red;height:300px;overflow:auto;padding:10px;margin-top:10px;"></div>
+
+  <textarea id="chatMsg" placeholder="Message"></textarea><br>
+  <input type="file" id="chatImg" accept="image/*"><br>
+  <img id="chatPreview" class="preview" style="display:none;">
+  <button onclick="sendChat()">Send</button>
+</div>
+
+<div id="leaderboard" class="page">
+  <h1>Leaderboard</h1>
+  <table id="lbTable"></table>
+
+  <h3>Admin Input</h3>
+  <div id="adminLeaderboard"></div>
+</div>
+
+<div id="about" class="page">
+  <h1>About</h1>
+  <p style="width:70%;margin:0 auto;">
+    Augmented∆Eye offers a battleground with fair rules and you can settle the match freely 
+    as long as it is in agreement with both parties. Getting to the highest ranks gives you 
+    special perks! And uncovering the mystery may lead you to the fabled Vault…
+  </p>
+</div>
+
+<div id="account" class="page">
+  <h1>Login / Register</h1>
+
+  <div id="authForms">
+    <input id="username" placeholder="Username"><br>
+    <input id="password" type="password" placeholder="Password"><br>
+    <button onclick="register()">Register</button>
+    <button onclick="login()">Login</button>
+  </div>
+
+  <div id="profile" style="display:none;">
+    <h2>Your Profile</h2>
+    <img id="pfp" src="" style="width:100px;"><br>
+    <input type="file" id="pfpInput" accept="image/*"><br>
+    <input id="displayName" placeholder="Display Name"><br>
+    <button onclick="saveProfile()">Save</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+
+  <h3>Admin Mode</h3>
+  <button onclick="toggleAdmin()">Toggle Admin</button>
+  <p id="adminStatus"></p>
+</div>
+
+<script>
+/* ---------- lightweight inline SVG mascot (albino skin, red eyes, black uniform) ---------- */
+const mascotSVG = `
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+  <defs>
+    <style>
+      .face{fill:#fff9f9;stroke:#00000030;stroke-width:1;}
+      .hair{fill:#f7f5f5;}
+      .eye-white{fill:#fff;}
+      .eye-red{fill:#d72626;}
+      .uniform{fill:#0b0b0b;}
+      .bow{fill:#9b1111;}
+    </style>
+  </defs>
+  <rect width="100%" height="100%" fill="none"/>
+  <!-- hair -->
+  <path class="hair" d="M40 55c10-30 60-34 100-6 18 13 30 40 10 70-18 26-74 28-100 6-18-18-28-44-10-76z"/>
+  <!-- face -->
+  <ellipse class="face" cx="120" cy="100" rx="46" ry="52"/>
+  <!-- eyes -->
+  <ellipse class="eye-red" cx="100" cy="98" rx="10" ry="14"/>
+  <ellipse class="eye-red" cx="140" cy="98" rx="10" ry="14"/>
+  <circle cx="103" cy="95" r="3" fill="#000"/>
+  <circle cx="143" cy="95" r="3" fill="#000"/>
+  <!-- mouth -->
+  <ellipse cx="120" cy="125" rx="4" ry="2" fill="#000"/>
+  <!-- uniform body -->
+  <rect class="uniform" x="60" y="150" width="120" height="70" rx="8"/>
+  <!-- collar -->
+  <path class="uniform" d="M60 150 q60 18 120 0 v10 q-60 20 -120 0z"/>
+  <!-- bow -->
+  <path class="bow" d="M105 160 q-14 8 -24 0 q14 -22 24 0z"/>
+  <path class="bow" d="M135 160 q14 8 24 0 q-14 -22 -24 0z"/>
+</svg>`.trim();
+
+/* set mascot image via data URI (no external file) */
+const mascotImg = document.getElementById('mascot');
+mascotImg.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(mascotSVG);
+
+/* helper to react */
+const MASCOT_ALERT = document.getElementById('mascotAlert');
+function _mascotReact(on){
+  if(on){
+    mascotImg.classList.add('mascot-glow','mascot-shake');
+    MASCOT_ALERT.style.opacity = 1; MASCOT_ALERT.style.transform = 'translateY(0)';
+    setTimeout(()=>mascotImg.classList.remove('mascot-shake'),400);
+  } else {
+    mascotImg.classList.remove('mascot-glow'); MASCOT_ALERT.style.opacity=0; MASCOT_ALERT.style.transform='translateY(-6px)';
+  }
+}
+
+/* ---------- page switching ---------- */
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ---------- account system ---------- */
+let currentUser = localStorage.getItem('currentUser') || null;
+let admin = JSON.parse(localStorage.getItem('admin') || "false");
+document.getElementById('adminStatus').innerText = admin ? 'Admin = ON' : 'Admin = OFF';
+
+function register(){
+  const u = document.getElementById('username').value.trim();
+  const p = document.getElementById('password').value;
+  if(!u||!p) return alert('Enter username and password');
+  if(localStorage.getItem('user_'+u)) return alert('User exists');
+  localStorage.setItem('user_'+u, JSON.stringify({password:p, pfp:'', name:u}));
+  alert('Registered!');
+}
+function login(){
+  const u = document.getElementById('username').value.trim();
+  const p = document.getElementById('password').value;
+  const data = JSON.parse(localStorage.getItem('user_'+u) || 'null');
+  if(!data||data.password!==p) return alert('Invalid login');
+  currentUser = u; localStorage.setItem('currentUser', u); loadProfile(); alert('Logged in as '+u);
+}
+function logout(){
+  currentUser=null; localStorage.removeItem('currentUser');
+  document.getElementById('profile').style.display='none';
+  document.getElementById('authForms').style.display='block';
+}
+function loadProfile(){
+  if(!currentUser) return;
+  const data = JSON.parse(localStorage.getItem('user_'+currentUser) || '{}');
+  document.getElementById('pfp').src = data.pfp || '';
+  document.getElementById('displayName').value = data.name || currentUser;
+  document.getElementById('profile').style.display='block';
+  document.getElementById('authForms').style.display='none';
+}
+function saveProfile(){
+  if(!currentUser) return alert('Login first');
+  let data = JSON.parse(localStorage.getItem('user_'+currentUser) || '{}');
+  data.name = document.getElementById('displayName').value;
+  const file = document.getElementById('pfpInput').files[0];
+  if(file){
+    const r = new FileReader();
+    r.onload = ()=>{ data.pfp = r.result; localStorage.setItem('user_'+currentUser, JSON.stringify(data)); document.getElementById('pfp').src = data.pfp; alert('Saved!'); };
+    r.readAsDataURL(file);
+  } else { localStorage.setItem('user_'+currentUser, JSON.stringify(data)); alert('Saved!'); }
+}
+
+/* ---------- admin: password protected toggle ---------- */
+function toggleAdmin(){
+  if(!admin){
+    const pw = prompt('Enter admin password:');
+    if(pw !== 'AugmentedFoxEye2077'){ alert('Incorrect password.'); return; }
+    admin = true; alert('Admin mode activated.');
+  } else {
+    admin = false; alert('Admin mode deactivated.');
+  }
+  localStorage.setItem('admin', JSON.stringify(admin));
+  document.getElementById('adminStatus').innerText = admin ? 'Admin = ON' : 'Admin = OFF';
+  loadAdminSections(); _mascotReact(admin);
+}
+
+/* ---------- build admin UI ---------- */
+function loadAdminSections(){
+  const adminAnn = document.getElementById('adminAnnounce');
+  const adminLB = document.getElementById('adminLeaderboard');
+  if(admin){
+    adminAnn.innerHTML = `
+      <label style="color:#f88;">Select announcement image (required):</label><br>
+      <input type="file" id="announceImg" accept="image/*"><br>
+      <img id="announcePreview" class="preview" style="display:none;"><br>
+      <button id="postAnnBtn">Post Announcement</button>
+    `;
+    document.getElementById('announceImg').addEventListener('change', function(){
+      const p = document.getElementById('announcePreview');
+      if(this.files && this.files[0]){ const r=new FileReader(); r.onload=()=>{p.src=r.result; p.style.display='block';}; r.readAsDataURL(this.files[0]); }
+      else { p.style.display='none'; p.src=''; }
+    });
+    document.getElementById('postAnnBtn').addEventListener('click', postAnnounce);
+
+    adminLB.innerHTML = `
+      <input id="lbName" placeholder="Name" type="text">
+      <input id="lbScore" placeholder="Score" type="number" step="1">
+      <input id="lbRank" placeholder="# Rank (1-100)" type="number" min="1" max="100">
+      <button id="addLbBtn">Add</button>
+    `;
+    document.getElementById('addLbBtn').addEventListener('click', addLeaderboard);
+  } else {
+    adminAnn.innerHTML = 'Admin only.';
+    adminLB.innerHTML = 'Admin only.';
+  }
+}
+
+/* ---------- announcements ---------- */
+function postAnnounce(){
+  const input = document.getElementById('announceImg');
+  if(!input || !input.files || !input.files[0]) return alert('Select an image first (Admin only).');
+  const file = input.files[0]; const reader = new FileReader();
+  reader.onload = ()=>{
+    const arr = JSON.parse(localStorage.getItem('announcements') || '[]');
+    arr.push(reader.result);
+    localStorage.setItem('announcements', JSON.stringify(arr));
+    loadAnnouncements();
+    input.value=''; const p=document.getElementById('announcePreview'); if(p){p.style.display='none'; p.src='';}
+  };
+  reader.readAsDataURL(file);
+}
+function loadAnnouncements(){
+  const arr = JSON.parse(localStorage.getItem('announcements') || '[]');
+  const c = document.getElementById('announceContainer'); c.innerHTML='';
+  arr.forEach(src=>{
+    const el = document.createElement('img'); el.className='post-img'; el.src=src; c.appendChild(el);
+  });
+}
+
+/* ---------- forum: image preview + text (Option C) ---------- */
+document.getElementById('forumImg').addEventListener('change', function(){
+  const p = document.getElementById('forumPreview');
+  if(this.files && this.files[0]){ const r=new FileReader(); r.onload=()=>{p.src=r.result; p.style.display='block';}; r.readAsDataURL(this.files[0]); }
+  else { p.style.display='none'; p.src=''; }
+});
+
+function postForum(){
+  if(!currentUser) return alert('Login first');
+  const input = document.getElementById('forumImg');
+  const text = document.getElementById('forumText').value.trim();
+  if((!input || !input.files || !input.files[0]) && !text) return alert('Write a message or select an image.');
+  if(input && input.files && input.files[0]){
+    const file = input.files[0]; const r = new FileReader();
+    r.onload = ()=>{
+      const arr = JSON.parse(localStorage.getItem('forum') || '[]');
+      arr.push({img:r.result, user:currentUser, text:text});
+      localStorage.setItem('forum', JSON.stringify(arr)); loadForum();
+      input.value=''; document.getElementById('forumPreview').style.display='none'; document.getElementById('forumText').value='';
+    };
+    r.readAsDataURL(file);
+  } else {
+    const arr = JSON.parse(localStorage.getItem('forum') || '[]');
+    arr.push({img:null, user:currentUser, text:text});
+    localStorage.setItem('forum', JSON.stringify(arr)); loadForum();
+    document.getElementById('forumText').value='';
+  }
+}
+function loadForum(){
+  const arr = JSON.parse(localStorage.getItem('forum') || '[]');
+  const forumPosts = document.getElementById('forumPosts');
+  forumPosts.innerHTML = '';
+  arr.forEach(p=>{
+    const u = JSON.parse(localStorage.getItem('user_'+p.user) || '{}');
+    const name = u.name || p.user;
+    const div = document.createElement('div');
+    div.style.marginBottom = '12px';
+    let html = `<b>${escapeHtml(name)}</b><br>`;
+    if(p.text) html += `<div style="color:#f88;margin:6px 0;">${escapeHtml(p.text)}</div>`;
+    if(p.img) html += `<img class='post-img' src='${p.img}'>`;
+    div.innerHTML = html;
+    forumPosts.appendChild(div);
+  });
+}
+
+/* ---------- chat: preview + send ---------- */
+document.getElementById('chatImg').addEventListener('change', function(){
+  const p = document.getElementById('chatPreview');
+  if(this.files && this.files[0]){ const r=new FileReader(); r.onload=()=>{p.src=r.result; p.style.display='block';}; r.readAsDataURL(this.files[0]); }
+  else { p.style.display='none'; p.src=''; }
+});
+
+function loadChatroom(){
+  const room = document.getElementById('chatroomSelect').value;
+  const msgs = JSON.parse(localStorage.getItem('chat_'+room) || '[]');
+  const chatWindow = document.getElementById('chatWindow'); chatWindow.innerHTML='';
+  msgs.forEach(m=>{
+    const div = document.createElement('div');
+    div.innerHTML = `<b>${escapeHtml(m.user)}</b>: ${escapeHtml(m.text || '')} ${m.img?("<br><img class='post-img' src='"+m.img+"'>"):""}`;
+    chatWindow.appendChild(div); chatWindow.appendChild(document.createElement('hr'));
+  });
+}
+
+function sendChat(){
+  if(!currentUser) return alert('Login first');
+  const room = document.getElementById('chatroomSelect').value;
+  const text = document.getElementById('chatMsg').value;
+  const input = document.getElementById('chatImg');
+  const file = input && input.files && input.files[0] ? input.files[0] : null;
+  if(file){
+    const r = new FileReader(); r.onload = ()=>{
+      const arr = JSON.parse(localStorage.getItem('chat_'+room) || '[]');
+      arr.push({user:currentUser, text:text, img:r.result});
+      localStorage.setItem('chat_'+room, JSON.stringify(arr));
+      document.getElementById('chatMsg').value=''; input.value=''; document.getElementById('chatPreview').style.display='none';
+      loadChatroom();
+    }; r.readAsDataURL(file);
+  } else {
+    const arr = JSON.parse(localStorage.getItem('chat_'+room) || '[]');
+    arr.push({user:currentUser, text:text, img:null});
+    localStorage.setItem('chat_'+room, JSON.stringify(arr));
+    document.getElementById('chatMsg').value=''; loadChatroom();
+  }
+}
+
+/* ---------- leaderboard admin fixed ---------- */
+function addLeaderboard(){
+  if(!admin) return alert('Admin only');
+  const name = document.getElementById('lbName').value || 'Anon';
+  const score = document.getElementById('lbScore').value || '0';
+  let rank = parseInt(document.getElementById('lbRank').value,10) || 9999;
+  const arr = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+  arr.push({name, score, rank}); localStorage.setItem('leaderboard', JSON.stringify(arr)); loadLeaderboard();
+  document.getElementById('lbName').value=''; document.getElementById('lbScore').value=''; document.getElementById('lbRank').value='';
+}
+function loadLeaderboard(){
+  const arr = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+  const lbTable = document.getElementById('lbTable'); lbTable.innerHTML="<tr><th>Rank</th><th>Name</th><th>Score</th></tr>";
+  arr.sort((a,b)=>a.rank - b.rank);
+  arr.forEach(e=>{ lbTable.innerHTML += `<tr><td>${e.rank}</td><td>${escapeHtml(e.name)}</td><td>${escapeHtml(e.score)}</td></tr>`; });
+}
+
+/* ---------- helpers & init ---------- */
+function escapeHtml(unsafe){ return (unsafe||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
+
+function init(){
+  // restore admin
+  admin = JSON.parse(localStorage.getItem('admin') || "false");
+  document.getElementById('adminStatus').innerText = admin ? 'Admin = ON' : 'Admin = OFF';
+  loadAdminSections(); _mascotReact(admin);
+  // load saved content
+  loadAnnouncements(); loadForum(); loadChatroom(); loadLeaderboard();
+  // wire Enter to login
+  document.getElementById('password').addEventListener('keyup', function(e){ if(e.key==='Enter') login(); });
+}
+init();
+
+/* ---------- particles animation ---------- */
+const c = document.getElementById('particles'); const ctx = c.getContext('2d');
+function resize(){ c.width = innerWidth; c.height = innerHeight; }
+resize(); window.addEventListener('resize', resize);
+let particles=[];
+for(let i=0;i<120;i++){ particles.push({x:Math.random()*c.width,y:Math.random()*c.height,s:Math.random()*2+1,v:Math.random()*0.5+0.2}); }
+function animate(){
+  ctx.clearRect(0,0,c.width,c.height); ctx.fillStyle='red';
+  particles.forEach(p=>{ ctx.beginPath(); ctx.arc(p.x,p.y,p.s,0,Math.PI*2); ctx.fill(); p.y += p.v; if(p.y>c.height) p.y=0; });
+  requestAnimationFrame(animate);
+}
+animate();
+</script>
+</body>
+</html>
