@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>AUGMENTED EYE — Upgraded (No Auth)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+:root{ --red:#d22; --dark:#070707; --muted:#330000; }
+body{ margin:0; background:black; color:var(--red); font-family:'Courier New',monospace; overflow-x:hidden; -webkit-font-smoothing:antialiased; }
+body:before{ content:"呪い 死 影 闇 憎い 怖い 血 人形 破滅 苦痛 怨霊 狂気"; position:fixed; top:0; left:0; width:100%; height:100%; font-size:100px; opacity:0.03; writing-mode:vertical-rl; transform:rotate(10deg); pointer-events:none; }
+
+nav{ background:#111; padding:12px; display:flex; gap:18px; justify-content:center; border-bottom:1px solid var(--red); position:sticky; top:0; z-index:50; }
+nav a{ color:var(--red); text-decoration:none; font-size:18px; }
+nav a:hover{ text-shadow:0 0 10px var(--red); cursor:pointer; }
+
+.header-wrap{ display:flex; align-items:center; justify-content:center; gap:12px; margin-top:10px; }
+#mascotWrap{ display:flex; flex-direction:column; align-items:center; width:80px; pointer-events:none; }
+#mascot{ width:72px; height:auto; transition:transform .28s ease, filter .28s ease; transform-origin:center; }
+#mascotAlert{ color:var(--red); font-weight:bold; margin-left:-12px; margin-top:-22px; font-size:20px; opacity:0; transform:translateY(-6px); transition:opacity .22s, transform .22s; text-shadow:0 0 6px rgba(255,0,0,0.8); }
+
+#title{ text-align:center; font-size:40px; margin:0; letter-spacing:4px; }
+#eye{ display:inline-block; width:34px; height:16px; border:3px solid var(--red); border-radius:50%; position:relative; animation:blink 3s infinite; }
+#eye:after{ content:""; position:absolute; top:3px; left:10px; width:8px; height:8px; background:var(--red); border-radius:50%; }
+@keyframes blink { 0%,90%,100%{height:16px;} 95%{height:2px;} }
+
+.page{ display:none; padding:20px; }
+.active{ display:block; }
+
+.card{ background:linear-gradient(180deg,#040404,#0b0000); border:1px solid #330000; padding:12px; border-radius:8px; margin-bottom:12px; color:var(--red); }
+
+input,textarea,select,button{ background:black; border:1px solid var(--muted); color:var(--red); padding:8px; outline:none; caret-color:var(--red); }
+button{ cursor:pointer; }
+.preview{ max-width:220px; display:block; margin-top:8px; border:1px solid #330000; }
+
+.post-img{ width:140px; margin:6px; border:1px solid #330000; display:block; }
+#chatWindow div{ margin-bottom:10px; }
+
+.vault-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:12px; width:90%; margin:10px auto; }
+.cell{ height:120px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:radial-gradient(circle at 20% 20%, rgba(0,0,0,0.2), transparent 10%), linear-gradient(180deg,#191010,#050404); border:2px solid #2b0a00; box-shadow:0 6px 20px rgba(0,0,0,0.6), inset 0 -10px 20px rgba(0,0,0,0.4); color:var(--red); font-size:18px; position:relative; overflow:hidden; }
+.cell .door-num{ font-weight:bold; text-shadow:0 0 8px rgba(255,0,0,0.25); }
+.cell.locked::after{ content:""; position:absolute; inset:0; background:linear-gradient(45deg, rgba(80,10,10,0.12), rgba(0,0,0,0.4)); mix-blend-mode:multiply; pointer-events:none; }
+.cell img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.18; filter:grayscale(60%); }
+
+.modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:120; }
+.modal .inner{ background:#070606; border:2px solid #330000; padding:18px; width:90%; max-width:760px; border-radius:8px; color:var(--red); }
+.modal.show{ display:flex; }
+
+.puzzleWrap{ width:360px; margin:12px auto; }
+.tile{ width:90px; height:90px; box-sizing:border-box; border:1px solid #2b0000; display:inline-block; vertical-align:top; background-size:360px 360px; cursor:pointer; }
+.tile.hidden{ background:transparent; cursor:default; border:1px dashed #2b0000; }
+
+.small{ font-size:14px; color:#f88; }
+.row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.center{ text-align:center; }
+.footer-note{ text-align:center; color:#600; margin-top:28px; font-size:13px; }
+
+@media(max-width:720px){ .vault-grid{ grid-template-columns:repeat(4,1fr); } .tile{ width:72px; height:72px; background-size:288px 288px; } .puzzleWrap{ width:288px; } .vault-grid{ width:100%; } }
+table.lb { width:100%; border-collapse:collapse; }
+table.lb th, table.lb td { padding:8px; border-bottom:1px solid #330000; text-align:left; }
+.edit-input { width:100%; box-sizing:border-box; background:#040404; border:1px solid #220000; color:var(--red); padding:6px; }
+
+/* ===== ADDITIONS ===== */
+
+.about-editor img {
+  max-width: 200px;
+  border: 1px solid #330000;
+  margin: 6px;
+}
+
+.tiny-avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  margin-right: 6px;
+  border: 1px solid #330000;
+  vertical-align: middle;
+}
+
+.crown {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: float 3s ease-in-out infinite;
+}
+
+.crown.rank1 { filter: drop-shadow(0 0 14px red); }
+.crown.rank2 { opacity: 0.8; }
+.crown.rank3 { opacity: 0.6; }
+.crown.rank4 { opacity: 0.4; }
+.crown.rank5 { opacity: 0.3; }
+
+@keyframes float {
+  0% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, -8px); }
+  100% { transform: translate(-50%, 0); }
+}
+
+.profile-popup {
+  position: absolute;
+  background: #050505;
+  border: 1px solid #330000;
+  padding: 10px;
+  z-index: 999;
+  width: 220px;
+  display: none;
+}
+
+.corner-img {
+  position: fixed;
+  width: 90px;
+  opacity: 0.4;
+  z-index: 5;
+}
+.corner-img.tl { top: 0; left: 0; }
+.corner-img.tr { top: 0; right: 0; }
+.corner-img.bl { bottom: 0; left: 0; }
+.corner-img.br { bottom: 0; right: 0; }
+
+
+</style>
+</head>
+<body>
+
+  <img id="cornerTL" class="corner-img tl">
+<img id="cornerTR" class="corner-img tr">
+<img id="cornerBL" class="corner-img bl">
+<img id="cornerBR" class="corner-img br">
+
+  <div id="profilePopup" class="profile-popup"></div>
+
+<canvas id="particles" style="position:fixed; inset:0; pointer-events:none; z-index:-1;"></canvas>
+
+<div class="header-wrap">
+  <div id="mascotWrap">
+    <img id="mascot" alt="mascot">
+    <div id="mascotAlert">!</div>
+  </div>
+  <div>
+    <div id="title">AUGMENTED <span id="eye"></span> EYE</div>
+
+    
+  </div>
+</div>
+
+<!-- ABOUT -->
+<div id="about" class="page">
+  <div class="card">
+    <h2>About</h2>
+    <div id="aboutContent"></div>
+    <div id="aboutAdmin"></div>
+  </div>
+</div>
+
+
+<nav>
+  <a onclick="showPage('home')">Home</a>
+  <a onclick="showPage('forum')">Forum</a>
+  <a onclick="showPage('chat')">Chat</a>
+  <a onclick="showPage('puzzles')">Puzzles</a>
+  <a onclick="showPage('vault')">Vault</a>
+  <a onclick="showPage('leaderboard')">Leaderboards</a>
+  <a onclick="showPage('account')">Account</a>
+  <a onclick="showPage('about')">About</a>
+  <a onclick="showPage('about')">About</a>
+
+
+</nav>
+
+<!-- HOME -->
+<div id="home" class="page active">
+  <div class="card">
+    <h2>Announcements</h2>
+    <div id="announceContainer" class="row"></div>
+    <div id="adminAnnounce"></div>
+  </div>
+
+  <div class="card">
+    <h3>Background Music</h3>
+    <p class="small">Music will attempt to autoplay. If blocked by the browser, press Play. Admins can upload an MP3 to replace the background track.</p>
+    <div class="row" style="align-items:center;">
+      <button id="musicToggle">Play Music</button>
+      <span id="musicStatus" class="small">Stopped</span>
+      <div id="musicAdminUI" style="margin-left:18px;"></div>
+    </div>
+    <!-- audio element: we'll set audio.src directly on admin upload or DB load -->
+    <audio id="bgAudio" loop crossorigin="anonymous"></audio>
+    <div id="musicPreviewWrap" style="margin-top:8px;"></div>
+  </div>
+</div>
+
+<!-- FORUM -->
+<div id="forum" class="page">
+  <div class="card">
+    <h2>Forum — Text & Image Posts</h2>
+    <div id="forumPosts"></div>
+    <hr>
+    <h3>Post</h3>
+    <label class="small">Select image (optional):</label><br>
+    <input type="file" id="forumImg" accept="image/*"><br>
+    <img id="forumPreview" class="preview" style="display:none;">
+    <br>
+    <textarea id="forumText" placeholder="Write something..." rows="4" style="width:80%;"></textarea><br>
+    <button onclick="postForum()">Post</button>
+  </div>
+</div>
+
+<!-- CHAT -->
+<div id="chat" class="page">
+  <div class="card">
+    <h2>Chatrooms</h2>
+    <select id="chatroomSelect" onchange="loadChatroom()">
+      <option>Channel 1</option><option>Channel 2</option><option>Channel 3</option>
+      <option>Channel 4</option><option>Channel 5</option>
+    </select>
+
+    <div id="chatWindow" style="border:1px solid #330000;height:300px;overflow:auto;padding:10px;margin-top:10px;"></div>
+
+    <textarea id="chatMsg" placeholder="Message"></textarea><br>
+    <input type="file" id="chatImg" accept="image/*"><br>
+    <img id="chatPreview" class="preview" style="display:none;">
+    <button onclick="sendChat()">Send</button>
+  </div>
+</div>
+
+<!-- PUZZLES -->
+<div id="puzzles" class="page">
+  <div class="card center">
+    <h2>Puzzle 1 — Jigsaw (Sadako)</h2>
+    <p class="small">Solve the sliding puzzle to reveal the image.</p>
+
+    <div id="puzzleArea" class="puzzleWrap"></div>
+
+    <div class="row center" style="justify-content:center;">
+      <button id="shuffleBtn">Shuffle</button>
+      <button id="solveHint" style="display:none">Solved!</button>
+    </div>
+
+    <div id="puzzleAdminReplace" style="margin-top:12px;"></div>
+
+    <div class="card center" id="passwordCard" style="display:none;margin-top:12px;">
+      <h2>Puzzle 2 — Password Lock</h2>
+      <p class="small">Enter the password to unlock the Vault page.</p>
+      <input id="pwdInput" placeholder="Enter password" style="width:60%;"><br>
+      <button onclick="checkPassword()">Unlock</button>
+      <p id="pwdFeedback" class="small"></p>
+    </div>
+
+    <div style="margin-top:12px;">
+      <h3 class="small">Admin Quick-Access (below jigsaw)</h3>
+      <input id="adminQuickPwd" placeholder="Admin password">
+      <button onclick="adminQuickAccess()">Enter</button>
+      <p class="small">ꈍ◡ꈍ <b>Are you sure?</b></p>
+    </div>
+  </div>
+</div>
+
+<!-- VAULT -->
+<div id="vault" class="page">
+  <div class="card">
+    <h2>The Vault</h2>
+    <p class="small">Only admin can edit cells and create new cells. Members can view unlocked cells (or view locked ones only after solving the puzzles).</p>
+    <div style="margin-bottom:12px;" id="vaultAdminControls"></div>
+    <div class="vault-grid" id="vaultGrid"></div>
+  </div>
+</div>
+
+<!-- LEADERBOARD -->
+<div id="leaderboard" class="page">
+  <div class="card">
+    <h2>Leaderboard</h2>
+    <!-- Table visible to everyone -->
+    <table id="lbTable" class="lb" style="width:90%;margin:0 auto;"></table>
+    <!-- Admin-only controls will be shown in this container -->
+    <div id="adminLeaderboard"></div>
+  </div>
+</div>
+
+<!-- ACCOUNT -->
+<div id="account" class="page">
+  <div class="card">
+    <h2>Login / Register</h2>
+    <div id="authForms">
+      <input id="username" placeholder="Username"><br><br>
+      <input id="password" type="password" placeholder="Password"><br><br>
+      <button onclick="register()">Register</button>
+      <button onclick="login()">Login</button>
+    </div>
+
+    <div id="profile" style="display:none;">
+      <h3>Your Profile</h3>
+      <img id="pfp" src="" style="width:100px;border:1px solid #330000;"><br>
+      <label class="small">Cover Image</label><br>
+<input type="file" id="coverInput" accept="image/*"><br>
+<img id="coverPreview" style="width:100%;max-height:120px;object-fit:cover;border:1px solid #330000;">
+      <input type="file" id="pfpInput" accept="image/*"><br>
+      <input id="displayName" placeholder="Display Name"><br><br>
+      <button onclick="saveProfile()">Save</button>
+      <button onclick="logout()">Logout</button>
+    </div>
+
+    <h3>Admin Mode</h3>
+    <button onclick="toggleAdmin()">Toggle Admin</button>
+    <p id="adminStatus"></p>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<div id="about" class="page">
+  <div class="card">
+    <h2>About This Project</h2>
+    <div id="aboutContent"></div>
+
+    <div id="aboutAdminUI"></div>
+  </div>
+</div>
+
+<!-- modal -->
+<div id="modal" class="modal"><div class="inner" id="modalInner"></div></div>
+
+<div class="footer-note">Welcome to the Underground where darkness augments optics.</div>
+
+<!-- Firebase scripts (app + database only) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+<script>
+
+function checkAdminStatus() {
+  if (!currentUser) {
+    admin = false;
+    localStorage.setItem('admin', 'false');
+    $('adminStatus').innerText = 'Admin = OFF';
+    loadAdminSections();
+    return;
+  }
+
+  db.ref('admins/' + currentUser).once('value')
+    .then(snap => {
+      admin = snap.val() === true;
+      localStorage.setItem('admin', JSON.stringify(admin));
+      $('adminStatus').innerText = admin ? 'Admin = ON' : 'Admin = OFF';
+      loadAdminSections();
+    })
+    .catch(err => {
+      console.error(err);
+      admin = false;
+      $('adminStatus').innerText = 'Admin = OFF';
+      loadAdminSections();
+    });
+}
+
+  function checkAdminStatus() {
+  if (!currentUser) {
+    admin = false;
+    localStorage.setItem('admin', 'false');
+    loadAdminSections();
+    return;
+  }
+
+  db.ref('admins/' + currentUser).once('value')
+    .then(snap => {
+      admin = snap.val() === true;
+      localStorage.setItem('admin', JSON.stringify(admin));
+      $('adminStatus').innerText = admin ? 'Admin = ON' : 'Admin = OFF';
+      loadAdminSections();
+    });
+}
+
+/* ================= CONFIG ================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyC148E12xnKN9hA2_m5K0e_6QeDeE-IsO4",
+  authDomain: "augmented-eye.firebaseapp.com",
+  databaseURL: "https://augmented-eye-default-rtdb.firebaseio.com/",
+  projectId: "augmented-eye",
+  storageBucket: "augmented-eye.firebasestorage.app",
+  messagingSenderId: "1092801444822",
+  appId: "1:1092801444822:web:69eb1b4e90aed7b235c277"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+/* ========================================== */
+
+function $(id){ return document.getElementById(id); }
+function el(tag,attrs){ const e=document.createElement(tag); if(attrs) Object.assign(e,attrs); return e; }
+function escapeHtml(unsafe){ return (unsafe||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
+
+/* mascot */
+const mascotSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240"><rect width="100%" height="100%" fill="none"/><ellipse cx="120" cy="100" rx="46" ry="52" fill="#fff9f9"/><ellipse cx="100" cy="98" rx="10" ry="14" fill="#d72626"/><ellipse cx="140" cy="98" rx="10" ry="14" fill="#d72626"/><rect x="60" y="150" width="120" height="70" rx="8" fill="#0b0b0b"/></svg>`;
+$('mascot').src = 'data:image/svg+xml;utf8,' + encodeURIComponent(mascotSVG);
+
+/* state */
+let currentUser = localStorage.getItem('currentUser') || null;
+let admin = JSON.parse(localStorage.getItem('admin') || "false");
+
+/* puzzle progress state */
+let puzzleStage = localStorage.getItem('puzzleStage') || 'puzzle1';
+// possible values: 'puzzle1' → 'puzzle2' → 'completed'
+
+$('adminStatus').innerText = admin ? 'Admin = ON' : 'Admin = OFF';
+
+/* AUDIO */
+const audio = $('bgAudio'); const musicToggle = $('musicToggle'); const musicStatus = $('musicStatus'); const musicPreviewWrap = $('musicPreviewWrap');
+function updateMusicUI(){ musicStatus.innerText = audio.paused ? 'Stopped' : 'Playing'; musicToggle.innerText = audio.paused ? 'Play Music' : 'Pause Music'; }
+musicToggle.addEventListener('click', ()=>{ if(audio.paused){ audio.play().catch(()=>{}); } else { audio.pause(); } updateMusicUI(); });
+audio.addEventListener('play', updateMusicUI); audio.addEventListener('pause', updateMusicUI);
+window.addEventListener('load', ()=>{ setTimeout(updateMusicUI,300); });
+
+/* navigation */
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id==='forum') loadForum();
+  if(id==='chat') loadChatroom();
+  if(id==='leaderboard') loadLeaderboard();
+  if(id==='vault') renderVaultGrid();
+  if(id === 'about') loadAbout();
+
+}
+
+/* ADMIN (client-side password toggle) */
+function toggleAdmin(){
+  if(!admin){
+    const pw = prompt('Enter admin password:');
+    if(pw !== 'AugmentedFoxEye2077'){ alert('Incorrect password.'); return; }
+    admin = true; alert('Admin mode activated.');
+  } else {
+    admin = false; alert('Admin mode deactivated.');
+  }
+  localStorage.setItem('admin', JSON.stringify(admin));
+  $('adminStatus').innerText = admin ? 'Admin = ON' : 'Admin = OFF';
+  loadAdminSections();
+}
+
+/* admin UI */
+function loadAdminSections(){
+  const adminAnn = $('adminAnnounce'); const adminLB = $('adminLeaderboard'); const musicAdminUI = $('musicAdminUI'); const puzzleAdminReplace = $('puzzleAdminReplace'); const vaultAdminControls = $('vaultAdminControls');
+  // Announcements admin UI
+  if(admin){
+    adminAnn.innerHTML = `
+      <label class="small">Select announcement image (required):</label><br>
+      <input type="file" id="announceImg" accept="image/*"><br>
+      <img id="announcePreview" class="preview" style="display:none;"><br>
+      <button id="postAnnBtn">Post Announcement</button>
+    `;
+    $('announceImg').addEventListener('change', function(){ const p=$('announcePreview'); if(this.files && this.files[0]){ const r=new FileReader(); r.onload=()=>{p.src=r.result; p.style.display='block';}; r.readAsDataURL(this.files[0]); } else { p.style.display='none'; p.src=''; }});
+    $('postAnnBtn').addEventListener('click', postAnnounce);
+
+    // Leaderboard admin controls
+    adminLB.innerHTML = `
+      <div style="margin-top:12px;">
+        <input id="lbName" placeholder="Name" type="text">
+        <input id="lbScore" placeholder="Score" type="number" step="1">
+        <input id="lbRank" placeholder="# Rank (1-100)" type="number" min="1" max="100">
+        <button id="addLbBtn">Add</button>
+      </div>
+    `;
+    $('addLbBtn').addEventListener('click', addLeaderboard);
+
+    // Music admin controls
+    musicAdminUI.innerHTML = `
+      <label class="small">(Admin) Upload MP3:</label>
+      <input type="file" id="musicFile" accept="audio/mpeg,audio/mp3"><button id="uploadMusicBtn">Upload</button>
+    `;
+    $('musicFile').addEventListener('change', function(){ /* preview later */ });
+    $('uploadMusicBtn').addEventListener('click', uploadMusic);
+
+    // Puzzle admin replace (image)
+    puzzleAdminReplace.innerHTML = `
+      <div style="margin-top:10px;">
+        <label class="small">(Admin) Replace puzzle image (jpg/png):</label><br>
+        <input type="file" id="puzzleImgInput" accept="image/*"><br>
+        <img id="puzzlePreview" class="preview" style="display:none;"><br>
+        <button id="uploadPuzzleBtn">Upload Puzzle Image</button>
+      </div>
+    `;
+    $('puzzleImgInput').addEventListener('change', function(){ const p=$('puzzlePreview'); if(this.files && this.files[0]){ const r=new FileReader(); r.onload=()=>{p.src=r.result; p.style.display='block';}; r.readAsDataURL(this.files[0]); } else { p.style.display='none'; p.src=''; }});
+    $('uploadPuzzleBtn').addEventListener('click', uploadPuzzleImage);
+
+    // Vault admin controls (create / mass-unlock)
+    vaultAdminControls.innerHTML = `
+      <div style="margin-bottom:8px;">
+        <button id="createCellBtn">Create Empty Cell</button>
+        <button id="massUnlockBtn">Unlock All Cells</button>
+      </div>
+    `;
+    $('createCellBtn').addEventListener('click', createEmptyCell);
+    $('massUnlockBtn').addEventListener('click', massUnlockCells);
+  } else {
+    adminAnn.innerHTML = 'Admin only.';
+    adminLB.innerHTML = ''; // no admin controls
+    musicAdminUI.innerHTML = '';
+    puzzleAdminReplace.innerHTML = '';
+    vaultAdminControls.innerHTML = '';
+  }
+  
+  if (admin) {
+  $('aboutAdminUI').innerHTML = `
+    <h3>Admin Edit</h3>
+    <textarea id="aboutText" rows="4" placeholder="About text"></textarea><br>
+    <input type="file" id="aboutImg" accept="image/*"><br>
+    <button onclick="saveAbout()">Save</button>
+  `;
+} else {
+  $('aboutAdminUI').innerHTML = '';
+}
+
+}
+loadAdminSections();
+
+/* ANNOUNCEMENTS (Firebase) */
+function postAnnounce(){
+  if(!admin) return alert('Admin only.');
+  const input = $('announceImg');
+  if(!input || !input.files || !input.files[0]) return alert('Select an image first (Admin only).');
+  const file = input.files[0]; const reader = new FileReader();
+  reader.onload = ()=>{ const ref = db.ref('announcements'); const item = {img:reader.result, created: Date.now()}; ref.push(item); input.value=''; $('announcePreview').style.display='none'; $('announcePreview').src=''; };
+  reader.readAsDataURL(file);
+}
+function loadAnnouncements(){
+  const ref = db.ref('announcements'); ref.off();
+  ref.limitToLast(20).on('value', snap=>{
+    const c = $('announceContainer'); c.innerHTML=''; const val = snap.val() || {};
+    Object.keys(val).forEach(k=>{ const src = val[k].img; const img = el('img',{className:'post-img', src:src}); c.appendChild(img); });
+  });
+}
+loadAnnouncements();
+
+function loadAbout() {
+  db.ref('about').on('value', snap => {
+    const data = snap.val() || {};
+    const container = $('aboutContent');
+    container.innerHTML = '';
+
+    if (data.text) {
+      container.innerHTML += `<p>${escapeHtml(data.text)}</p>`;
+    }
+    if (data.img) {
+      container.innerHTML += `<img src="${data.img}" class="post-img">`;
+    }
+  });
+
+  function saveAbout() {
+  if (!admin) return;
+
+  const text = $('aboutText').value;
+  const imgInput = $('aboutImg');
+
+  if (imgInput.files[0]) {
+    const r = new FileReader();
+    r.onload = () => {
+      db.ref('about').set({ text, img: r.result });
+      alert('About page updated');
+    };
+    r.readAsDataURL(imgInput.files[0]);
+  } else {
+    db.ref('about').set({ text });
+    alert('About page updated');
+  }
+}
+
+}
+
+/* FORUM (Firebase) */
+$('forumImg').addEventListener('change', function(){ const p = $('forumPreview'); if(this.files && this.files[0]){ const r=new FileReader(); r.onload=()=>{p.src=r.result; p.style.display='block';}; r.readAsDataURL(this.files[0]); } else { p.style.display='none'; p.src=''; }});
+function postForum(){ if(!currentUser) return alert('Login first'); const input = $('forumImg'); const text = $('forumText').value.trim(); if((!input || !input.files || !input.files[0]) && !text) return alert('Write a message or select an image.'); if(input && input.files && input.files[0]){ const file = input.files[0]; const r = new FileReader(); r.onload = ()=>{ db.ref('forum').push({img:r.result, user:currentUser, text:text, created:Date.now()}); input.value=''; $('forumPreview').style.display='none'; $('forumText').value=''; }; r.readAsDataURL(file); } else { db.ref('forum').push({img:null, user:currentUser, text:text, created:Date.now()}); $('forumText').value=''; } }
+function loadForum(){ const ref = db.ref('forum'); ref.off(); ref.limitToLast(200).on('value', snap=>{ const val = snap.val() || {}; const container = $('forumPosts'); container.innerHTML=''; Object.keys(val).sort((a,b)=>val[a].created - val[b].created).forEach(k=>{ const p = val[k]; const udata = JSON.parse(localStorage.getItem('user_'+(p.user||''))||'{}'); const name = udata.name || p.user; const div = el('div'); div.style.marginBottom = '12px'; let html = `<b>${escapeHtml(name)}</b><br>`; if(p.text) html += `<div style="color:#f88;margin:6px 0;">${escapeHtml(p.text)}</div>`; if(p.img) html += `<img class='post-img' src='${p.img}'>`; div.innerHTML = html; container.appendChild(div); }); }); }
+loadForum();
+
+/* CHAT (Firebase) */
+$('chatImg').addEventListener('change', function(){ const p = $('chatPreview'); if(this.files && this.files[0]){ const r=new FileReader(); r.onload=()=>{p.src=r.result; p.style.display='block';}; r.readAsDataURL(this.files[0]); } else { p.style.display='none'; p.src=''; }});
+function loadChatroom(){ const room = $('chatroomSelect').value; const msgsRef = db.ref('chats/' + room.replace(/\s+/g,'_')); msgsRef.off(); msgsRef.limitToLast(200).on('value', snap=>{ const chatWindow = $('chatWindow'); chatWindow.innerHTML=''; const val = snap.val() || {}; Object.keys(val).sort((a,b)=>val[a].created - val[b].created).forEach(k=>{ const m = val[k]; const div = el('div'); div.innerHTML = `<b>${escapeHtml(m.user)}</b>: ${escapeHtml(m.text || '')} ${m.img?("<br><img class='post-img' src='"+m.img+"'>"):""}`; chatWindow.appendChild(div); chatWindow.appendChild(document.createElement('hr')); }); chatWindow.scrollTop = chatWindow.scrollHeight; }); }
+function sendChat(){ if(!currentUser) return alert('Login first'); const room = $('chatroomSelect').value; const text = $('chatMsg').value; const input = $('chatImg'); const file = input && input.files && input.files[0] ? input.files[0] : null; const msgsRef = db.ref('chats/' + room.replace(/\s+/g,'_')); if(file){ const r = new FileReader(); r.onload = ()=>{ msgsRef.push({user:currentUser, text:text, img:r.result, created:Date.now()}); $('chatMsg').value=''; input.value=''; $('chatPreview').style.display='none'; loadChatroom(); }; r.readAsDataURL(file); } else { msgsRef.push({user:currentUser, text:text, img:null, created:Date.now()}); $('chatMsg').value=''; loadChatroom(); } }
+
+/* LEADERBOARD (Firebase) - Option C: rank is authoritative */
+/* Features added:
+   - table rows layout (table)
+   - admin edit & delete per-entry
+   - admin add entry (existing)
+   - admin can change rank/name/score after input
+*/
+function addLeaderboard(){ if(!admin) return alert('Admin only'); const name = $('lbName').value || 'Anon'; const score = $('lbScore').value || '0'; let rank = parseInt($('lbRank').value,10); if(isNaN(rank)) rank = 9999; db.ref('leaderboard').push({name, score: String(score), rank: rank, created:Date.now()}); $('lbName').value=''; $('lbScore').value=''; $('lbRank').value=''; }
+function loadLeaderboard(){
+  const ref = db.ref('leaderboard'); ref.off();
+  ref.on('value', snap=>{
+    const data = snap.val() || {};
+    // convert to array of {key, ...}
+    const rows = Object.keys(data||{}).map(k=> ({key:k, ...data[k]}) );
+    // sort by rank (numeric ascending). If same rank fallback to created timestamp.
+    rows.sort((a,b)=>{
+      const ra = parseInt(a.rank,10) || 9999;
+      const rb = parseInt(b.rank,10) || 9999;
+      if(ra !== rb) return ra - rb;
+      return (a.created||0) - (b.created||0);
+    });
+    const table = $('lbTable');
+    // build header
+    table.innerHTML = `<tr>
+      <th style="border-bottom:1px solid #330000;padding:8px;width:8%;">Rank</th>
+      <th style="border-bottom:1px solid #330000;padding:8px;width:40%;">Name</th>
+      <th style="border-bottom:1px solid #330000;padding:8px;width:20%;">Score</th>
+      <th style="border-bottom:1px solid #330000;padding:8px;width:22%;">Actions</th>
+    </tr>`;
+    rows.forEach(r=>{
+      // sanitize
+      const key = r.key;
+      const rank = escapeHtml(String(r.rank||''));
+      const name = escapeHtml(r.name||'');
+      const score = escapeHtml(String(r.score||'0'));
+      // standard row for non-admins
+      if(!admin){
+        table.innerHTML += `<tr data-key="${key}">
+          <td style='padding:6px;'>${rank}</td>
+          <td style='padding:6px;'>${name}</td>
+          <td style='padding:6px;'>${score}</td>
+          <td style='padding:6px;'>${escapeHtml('')}</td>
+        </tr>`;
+      } else {
+        // admin row with Edit/Delete
+        table.innerHTML += `<tr data-key="${key}">
+          <td style='padding:6px;'>
+            <input class="edit-input" data-field="rank" data-key="${key}" value="${rank}">
+          </td>
+          <td style='padding:6px;'>
+            <input class="edit-input" data-field="name" data-key="${key}" value="${name}">
+          </td>
+          <td style='padding:6px;'>
+            <input class="edit-input" data-field="score" data-key="${key}" value="${score}">
+          </td>
+          <td style='padding:6px;'>
+            <button onclick="saveLeaderboardEntry('${key}')">Save</button>
+            <button onclick="deleteLeaderboardEntry('${key}')" style="margin-left:8px">Delete</button>
+          </td>
+        </tr>`;
+      }
+    });
+    // re-bind event listeners for edits (if admin)
+    if(admin){
+      // No additional binding required — inputs are directly read on saveLeaderboardEntry
+    }
+    loadAdminSections();
+  });
+}
+function saveLeaderboardEntry(key){
+  if(!admin) return alert('Admin only');
+  // read inputs inside the table row
+  const row = document.querySelector(`tr[data-key="${key}"]`);
+  if(!row) return;
+  const newRank = row.querySelector('input[data-field="rank"]').value.trim();
+  const newName = row.querySelector('input[data-field="name"]').value.trim();
+  const newScore = row.querySelector('input[data-field="score"]').value.trim();
+  const payload = {
+    rank: parseInt(newRank,10) || 9999,
+    name: newName || 'Anon',
+    score: String(newScore || '0'),
+    updated: Date.now()
+  };
+  db.ref('leaderboard/' + key).update(payload).then(()=>{ alert('Leaderboard entry updated.'); }).catch(err=>{ console.error(err); alert('Failed to update entry.'); });
+}
+function deleteLeaderboardEntry(key){
+  if(!admin) return alert('Admin only');
+  if(!confirm('Delete this leaderboard entry?')) return;
+  db.ref('leaderboard/' + key).remove().then(()=>{ alert('Deleted.'); }).catch(err=>{ console.error(err); alert('Failed to delete.'); });
+}
+loadLeaderboard();
+
+/* VAULT */
+const vaultCellsPath = 'vault/cells';
+function renderVaultGrid(){
+  const grid = $('vaultGrid'); grid.innerHTML='';
+  db.ref(vaultCellsPath).off();
+  db.ref(vaultCellsPath).on('value', snap=>{
+    const data = snap.val() || {};
+    grid.innerHTML = '';
+    // ensure a consistent number of cells (we will display all keys found and pad to 20 if none)
+    const keys = Object.keys(data || {});
+    // If no cells exist, create placeholders up to 20 without saving to DB (visual).
+    // But admin can create a real cell via Create button.
+    let max = Math.max(20, keys.length);
+    // When keys exist, show them by their numeric id if possible
+    // We'll try to use numeric IDs if stored as children keyed by number
+    const numericKeys = keys.filter(k=>!isNaN(parseInt(k,10))).map(k=>parseInt(k,10));
+    if(numericKeys.length) max = Math.max( Math.max(...numericKeys), 20 );
+    for(let i=1;i<=max;i++){
+      const id = i;
+      const cell = data[id] || {};
+      const div = el('div',{className:'cell'+(cell.locked? ' locked':'' )});
+      div.dataset.id = id;
+      const img = cell.img ? el('img',{src:cell.img}) : null;
+      if(img) div.appendChild(img);
+      const dnum = el('div',{className:'door-num', innerText:`Cell ${id}`});
+      div.appendChild(dnum);
+      div.addEventListener('click', ()=> openCellModal(id, cell));
+      grid.appendChild(div);
+    }
+  });
+}
+function openCellModal(id, cellData){
+  // Ensure we fetch the latest data from DB in case of changes
+  db.ref(`${vaultCellsPath}/${id}`).once('value').then(snap=>{
+    const cell = snap.val() || cellData || {};
+    // If locked and not admin and puzzle not solved, block viewing
+    if(cell.locked && !admin && !puzzleSolved){
+      const modal = $('modal'); const inner = $('modalInner');
+      inner.innerHTML = `<h3>Cell ${id} — Locked</h3><p class="small">This cell is locked. Solve the puzzles to unlock it or contact an admin.</p><div style="text-align:right;margin-top:8px;"><button onclick="closeModal()">Close</button></div>`;
+      modal.classList.add('show');
+      return;
+    }
+    const modal = $('modal'); const inner = $('modalInner');
+    inner.innerHTML = `<h3>Cell ${id}</h3>`;
+    inner.innerHTML += `<div style="display:flex;gap:10px;flex-wrap:wrap;"><div style="flex:1"><b>Name:</b><div id="cellNameView" class="small">${escapeHtml(cell.name||'')}</div><b>Description:</b><div id="cellDescView" class="small" style="white-space:pre-wrap">${escapeHtml(cell.description||'')}</div><b>Threat Level:</b><div id="cellThreatView" class="small">${escapeHtml(cell.threat||'')}</div><b>Locked:</b> <div class="small">${cell.locked? 'Yes' : 'No'}</div></div><div style="width:180px;">${cell.img?'<img src="'+cell.img+'" style="width:100%;border:1px solid #330000;">':'<div style="width:100%;height:120px;background:#050505;border:1px dashed #330000;display:flex;align-items:center;justify-content:center;">No image</div>'}</div></div><hr>`;
+    if(admin){
+      inner.innerHTML += `<h4>Edit (Admin)</h4>
+        <input id="cellName" placeholder="Name" value="${escapeHtml(cell.name||'')}"><br>
+        <textarea id="cellDesc" placeholder="Description" style="width:100%">${escapeHtml(cell.description||'')}</textarea><br>
+        <input id="cellThreat" placeholder="Threat Level" value="${escapeHtml(cell.threat||'')}"><br>
+        <label class="small">Locked:
+          <select id="cellLocked">
+            <option value="false"${cell.locked? '':' selected'}>No</option>
+            <option value="true"${cell.locked? ' selected':''}>Yes</option>
+          </select>
+        </label><br>
+        <input type="file" id="cellImgInput" accept="image/*"><br>
+        <button id="saveCellBtn">Save</button>
+        <button id="clearCellBtn" style="margin-left:8px">Clear</button>
+      `;
+      setTimeout(()=>{ 
+        const inp = $('cellImgInput');
+        inp.addEventListener('change', function(){ /* preview if desired */ }); 
+        $('saveCellBtn').addEventListener('click', ()=> saveCell(id)); 
+        $('clearCellBtn').addEventListener('click', ()=> clearCell(id)); 
+      },50);
+    }
+    inner.innerHTML += `<div style="text-align:right;margin-top:8px;"><button onclick="closeModal()">Close</button></div>`;
+    modal.classList.add('show');
+  }).catch(err=>{
+    console.error(err);
+    alert('Failed loading cell.');
+  });
+}
+function closeModal(){ $('modal').classList.remove('show'); $('modalInner').innerHTML=''; }
+function saveCell(id){
+  if(!admin) return alert('Admin only.');
+  const name = $('cellName').value;
+  const description = $('cellDesc').value;
+  const threat = $('cellThreat').value;
+  const locked = $('cellLocked') ? $('cellLocked').value === 'true' : false;
+  const fileInput = $('cellImgInput');
+  if(fileInput && fileInput.files && fileInput.files[0]){
+    const r = new FileReader();
+    r.onload = ()=>{ db.ref(`${vaultCellsPath}/${id}`).set({name, description, threat, img:r.result, locked:locked}).then(()=>{ alert('Saved'); closeModal(); }).catch(e=>{ console.error(e); alert('Save failed'); }); };
+    r.readAsDataURL(fileInput.files[0]);
+  } else {
+    db.ref(`${vaultCellsPath}/${id}`).set({name, description, threat, img:null, locked:locked}).then(()=>{ alert('Saved'); closeModal(); }).catch(e=>{ console.error(e); alert('Save failed'); });
+  }
+}
+function clearCell(id){ if(!admin) return alert('Admin only.'); if(!confirm('Clear (delete) this cell from DB?')) return; db.ref(`${vaultCellsPath}/${id}`).remove().then(()=>{ alert('Cleared'); closeModal(); }).catch(err=>{ console.error(err); alert('Failed to clear'); }); }
+function createEmptyCell(){
+  if(!admin) return alert('Admin only');
+  // choose an ID: find the lowest missing numeric id between 1..999
+  db.ref(vaultCellsPath).once('value').then(snap=>{
+    const data = snap.val() || {};
+    let id = 1;
+    while(data[id]) id++;
+    db.ref(`${vaultCellsPath}/${id}`).set({name:'New Cell', description:'', threat:'', img:null, locked:true}).then(()=>{ alert('Created cell ' + id); renderVaultGrid(); }).catch(e=>{ console.error(e); alert('Failed to create cell'); });
+  });
+}
+function massUnlockCells(){ if(!admin) return alert('Admin only'); if(!confirm('Unlock ALL cells?')) return; db.ref(vaultCellsPath).once('value').then(snap=>{ const data = snap.val() || {}; const updates = {}; Object.keys(data).forEach(k => { updates[k + '/locked'] = false; }); db.ref(vaultCellsPath).update(updates).then(()=>{ alert('All unlocked'); }).catch(e=>{ console.error(e); alert('Failed to unlock'); }); }); }
+renderVaultGrid();
+
+/* PUZZLE (4x4 sliding) */
+const PUZZLE_SIZE = 4; let puzzleSolved = false;
+let currentPuzzleImage = null; // base64 URL or remote URL
+const defaultPlaceholder = 'https://i.imgur.com/3j2Q0QH.jpg';
+const puzzleArea = $('puzzleArea');
+
+function setPuzzleImage(url){
+  currentPuzzleImage = url || defaultPlaceholder;
+  buildPuzzle();
+}
+function fetchStoredPuzzleImage(){
+  db.ref('settings/puzzleImage').once('value').then(snap=>{
+    const v = snap.val();
+    if(v && v.data) setPuzzleImage(v.data);
+    else setPuzzleImage(defaultPlaceholder);
+  }).catch(()=> setPuzzleImage(defaultPlaceholder));
+}
+
+function buildPuzzle(){
+  puzzleArea.innerHTML = '';
+  const sizePx = puzzleArea.clientWidth || 360;
+  for(let i=0;i<PUZZLE_SIZE*PUZZLE_SIZE;i++){
+    const t = el('div',{className:'tile', id:'tile_'+i});
+    t.style.width = (sizePx/PUZZLE_SIZE) + 'px';
+    t.style.height = (sizePx/PUZZLE_SIZE) + 'px';
+    const r = Math.floor(i / PUZZLE_SIZE), c = i % PUZZLE_SIZE;
+    const bgx = (c * - (sizePx/PUZZLE_SIZE));
+    const bgy = (r * - (sizePx/PUZZLE_SIZE));
+    t.style.backgroundImage = `url(${currentPuzzleImage || defaultPlaceholder})`;
+    t.style.backgroundSize = `${sizePx}px ${sizePx}px`;
+    t.style.backgroundPosition = `${bgx}px ${bgy}px`;
+    t.addEventListener('click', ()=> tileClick(i));
+    puzzleArea.appendChild(t);
+  }
+  shufflePuzzle();
+}
+function shufflePuzzle(){
+  let order = []; for(let i=0;i<PUZZLE_SIZE*PUZZLE_SIZE;i++) order.push(i);
+  let emptyIndex = order.length-1;
+  for(let m=0;m<200;m++){ const neighbors = getNeighbors(emptyIndex); const swapWith = neighbors[Math.floor(Math.random()*neighbors.length)]; const t=order[emptyIndex]; order[emptyIndex]=order[swapWith]; order[swapWith]=t; emptyIndex=swapWith; }
+  for(let i=0;i<order.length;i++){
+    const tile = $('tile_'+i);
+    const val = order[i];
+    if(val === order.length-1){ tile.classList.add('hidden'); tile.style.backgroundImage='none'; tile.innerText=''; }
+    else { tile.classList.remove('hidden'); tile.style.backgroundImage = `url(${currentPuzzleImage || defaultPlaceholder})`; const r = Math.floor(val / PUZZLE_SIZE), c = val % PUZZLE_SIZE; const sizePx = puzzleArea.clientWidth || 360; const bgx = (c * - (sizePx/PUZZLE_SIZE)); const bgy = (r * - (sizePx/PUZZLE_SIZE)); tile.style.backgroundSize = `${sizePx}px ${sizePx}px`; tile.style.backgroundPosition = `${bgx}px ${bgy}px`; tile.innerText=''; }
+  }
+  puzzleSolved = false; $('solveHint').style.display='none';
+}
+function getNeighbors(index){ const r = Math.floor(index / PUZZLE_SIZE), c = index % PUZZLE_SIZE; const arr = []; if(r>0) arr.push((r-1)*PUZZLE_SIZE + c); if(r<PUZZLE_SIZE-1) arr.push((r+1)*PUZZLE_SIZE + c); if(c>0) arr.push(r*PUZZLE_SIZE + (c-1)); if(c<PUZZLE_SIZE-1) arr.push(r*PUZZLE_SIZE + (c+1)); return arr; }
+function tileClick(i){
+  if(puzzleSolved) return;
+  const tot = PUZZLE_SIZE*PUZZLE_SIZE;
+  let emptyIndex = -1; for(let k=0;k<tot;k++){ if($('tile_'+k).classList.contains('hidden')) emptyIndex = k; }
+  const neighbors = getNeighbors(emptyIndex);
+  if(neighbors.indexOf(i) !== -1){
+    const a = $('tile_'+i), b = $('tile_'+emptyIndex);
+    const aBg = a.style.backgroundImage, aPos = a.style.backgroundPosition, aSize = a.style.backgroundSize;
+    const aHidden = a.classList.contains('hidden');
+    const bBg = b.style.backgroundImage, bPos = b.style.backgroundPosition, bSize = b.style.backgroundSize;
+    const bHidden = b.classList.contains('hidden');
+    a.style.backgroundImage = bBg; a.style.backgroundPosition = bPos; a.style.backgroundSize = bSize;
+    b.style.backgroundImage = aBg; b.style.backgroundPosition = aPos; b.style.backgroundSize = aSize;
+    if(aHidden){ a.classList.remove('hidden'); } else a.classList.add('hidden');
+    if(bHidden){ b.classList.remove('hidden'); } else b.classList.add('hidden');
+    checkPuzzleSolved();
+  }
+}
+function checkPuzzleSolved(){
+  const tot = PUZZLE_SIZE*PUZZLE_SIZE;
+  let ok = true;
+  for(let i=0;i<tot;i++){
+    const tile = $('tile_'+i);
+    if(tile.classList.contains('hidden')) continue;
+    const bgpos = tile.style.backgroundPosition;
+    const r = Math.floor(i / PUZZLE_SIZE), c = i % PUZZLE_SIZE;
+    const sizePx = puzzleArea.clientWidth || 360;
+    const expx = (c * - (sizePx/PUZZLE_SIZE)) + 'px';
+    const expy = (r * - (sizePx/PUZZLE_SIZE)) + 'px';
+    if(!bgpos.includes(expx) || !bgpos.includes(expy)){ ok = false; break; }
+  }
+  if(ok){ puzzleSolved = true; $('solveHint').style.display='inline-block'; $('passwordCard').style.display='block'; alert('Jigsaw solved! Proceed to password puzzle.'); }
+}
+document.getElementById('shuffleBtn').addEventListener('click', ()=> shufflePuzzle());
+// load stored puzzle image on init
+fetchStoredPuzzleImage();
+
+/* PASSWORD puzzle */
+const PASSWORD = 'Vault57FAugmentedSystem';
+function checkPassword(){
+  const v = $('pwdInput').value.trim();
+  if(v === PASSWORD){ $('pwdFeedback').innerText = 'Correct — unlocking vault...'; puzzleSolved = true; showPage('vault'); setTimeout(()=>{ renderVaultGrid(); },300); }
+  else { $('pwdFeedback').innerText = 'Incorrect password.'; }
+}
+
+/* Admin quick-access below jigsaw */
+function adminQuickAccess(){
+  const v = $('adminQuickPwd').value.trim();
+  if(v === 'DeathVault2077'){ alert('Admin access granted. Opening vault.'); admin = true; localStorage.setItem('admin', JSON.stringify(true)); loadAdminSections(); showPage('vault'); setTimeout(()=>{ renderVaultGrid(); },300); }
+  else alert('Incorrect admin quick-access password.');
+}
+
+/* modal */
+$('modal').addEventListener('click', (e)=>{ if(e.target.id==='modal') closeModal(); });
+
+/* particles */
+const c = document.getElementById('particles'); const ctx = c.getContext('2d');
+function resize(){ c.width = innerWidth; c.height = innerHeight; }
+resize(); window.addEventListener('resize', resize);
+let particlesArr = []; for(let i=0;i<120;i++){ particlesArr.push({x:Math.random()*c.width,y:Math.random()*c.height,s:Math.random()*2+1,v:Math.random()*0.5+0.2}); }
+function animate(){ ctx.clearRect(0,0,c.width,c.height); ctx.fillStyle='rgba(210,20,20,0.6)'; particlesArr.forEach(p=>{ ctx.beginPath(); ctx.arc(p.x,p.y,p.s,0,Math.PI*2); ctx.fill(); p.y += p.v; if(p.y>c.height) p.y=0; }); requestAnimationFrame(animate); }
+animate();
+
+/* profile & auth-lite (local) */
+function register(){ const u = $('username').value.trim(); const p = $('password').value; if(!u||!p) return alert('Enter username and password'); if(localStorage.getItem('user_'+u)) return alert('User exists'); localStorage.setItem('user_'+u, JSON.stringify({password:p, pfp:'', name:u})); alert('Registered!'); }
+function login(){ const u = $('username').value.trim(); const p = $('password').value; const data = JSON.parse(localStorage.getItem('user_'+u) || 'null'); if(!data||data.password!==p) return alert('Invalid login'); currentUser = u; localStorage.setItem('currentUser', u); loadProfile(); checkAdminStatus(); alert('Logged in as '+u); }
+function logout(){ currentUser=null; localStorage.removeItem('currentUser'); $('profile').style.display='none'; $('authForms').style.display='block'; }
+function loadProfile(){ if(!currentUser) return; const data = JSON.parse(localStorage.getItem('user_'+currentUser) || '{}'); $('pfp').src = data.pfp || ''; $('displayName').value = data.name || currentUser; $('profile').style.display='block'; $('authForms').style.display='none'; }
+function saveProfile(){ if(!currentUser) return alert('Login first'); let data = JSON.parse(localStorage.getItem('user_'+currentUser) || '{}'); data.name = $('displayName').value; const file = $('pfpInput').files[0]; if(file){ const r = new FileReader(); r.onload = ()=>{ data.pfp = r.result; localStorage.setItem('user_'+currentUser, JSON.stringify(data)); $('pfp').src = data.pfp; alert('Saved!'); }; r.readAsDataURL(file); } else { localStorage.setItem('user_'+currentUser, JSON.stringify(data)); alert('Saved!'); } }
+
+/* init */
+function init(){ admin = JSON.parse(localStorage.getItem('admin') || "false"); $('adminStatus').innerText = admin ? 'Admin = ON' : 'Admin = OFF'; loadAdminSections(); loadAnnouncements(); loadForum(); loadChatroom(); loadLeaderboard(); renderVaultGrid(); if(currentUser) loadProfile(); checkAdminStatus(); setupMusicFromDB(); document.getElementById('password').addEventListener('keyup', function(e){ if(e.key==='Enter') login(); }); }
+init();
+
+/* ================= Additional admin-upload functions ================= */
+
+/* Upload music (admin) -> store in DB as base64 */
+function uploadMusic(){
+  if(!admin) return alert('Admin only.');
+  const input = $('musicFile');
+  if(!input || !input.files || !input.files[0]) return alert('Select an MP3 first');
+  const file = input.files[0];
+  if(!file.type.includes('audio')) return alert('Please select an audio file (mp3).');
+  const r = new FileReader();
+  r.onload = ()=>{ const data = r.result; db.ref('settings/music').set({data: data, name: file.name, updated: Date.now()}).then(()=>{
+      // use audio.src directly for better persistence behavior
+      audio.pause();
+      audio.src = data;
+      audio.load();
+      audio.play().catch(()=>{});
+      updateMusicUI();
+      musicPreviewWrap.innerHTML = `<div class="small">Now playing: ${escapeHtml(file.name)}</div>`;
+      input.value = '';
+      alert('Music uploaded and set for all users.');
+    }).catch(err=>{ console.error(err); alert('Failed to upload music.'); });
+  };
+  r.readAsDataURL(file);
+}
+
+/* Load stored music on init */
+function setupMusicFromDB(){
+  db.ref('settings/music').once('value').then(snap=>{
+    const v = snap.val();
+    if(v && v.data){
+      // set audio.src directly (works better than setting <source>)
+      audio.src = v.data;
+      // attempt load & autoplay (may be blocked by browser)
+      audio.load();
+      audio.play().catch(()=>{});
+      musicPreviewWrap.innerHTML = `<div class="small">Now playing: ${escapeHtml(v.name || 'Uploaded Track')}</div>`;
+    } else {
+      // keep default source (empty) or optionally set to a default remote URL
+      // audio.src = ''; // keep blank
+    }
+  }).catch(()=>{ /* ignore */ });
+}
+
+/* Upload puzzle image (admin) -> store in DB as base64 */
+function uploadPuzzleImage(){
+  if(!admin) return alert('Admin only.');
+  const input = $('puzzleImgInput');
+  if(!input || !input.files || !input.files[0]) return alert('Select an image first');
+  const file = input.files[0];
+  if(!file.type.startsWith('image/')) return alert('Please select an image file.');
+  const r = new FileReader();
+  r.onload = ()=>{ const data = r.result; db.ref('settings/puzzleImage').set({data: data, name: file.name, updated: Date.now()}).then(()=>{
+      setPuzzleImage(data);
+      input.value = '';
+      $('puzzlePreview').style.display='none';
+      alert('Puzzle image updated for all users.');
+    }).catch(err=>{ console.error(err); alert('Failed to upload puzzle image.'); });
+  };
+  r.readAsDataURL(file);
+}
+
+
+/* ===== ADDITIONS ===== */
+
+/* About page */
+function loadAbout(){
+  db.ref('about').on('value', snap=>{
+    $('aboutContent').innerHTML = snap.val()?.html || '';
+  });
+}
+function setupAboutAdmin(){
+  if(!admin) return;
+  $('aboutAdmin').innerHTML = `
+    <textarea id="aboutText" rows="6" style="width:100%"></textarea><br>
+    <input type="file" id="aboutImg" accept="image/*"><br>
+    <button onclick="saveAbout()">Save</button>
+  `;
+}
+function saveAbout(){
+  const txt = $('aboutText').value;
+  const file = $('aboutImg').files[0];
+  if(file){
+    const r=new FileReader();
+    r.onload=()=>db.ref('about').set({html:txt+`<br><img src="${r.result}">`});
+    r.readAsDataURL(file);
+  } else db.ref('about').set({html:txt});
+}
+
+/* Auto show puzzle 2 */
+const _checkPuzzleSolved = checkPuzzleSolved;
+checkPuzzleSolved = function(){
+  _checkPuzzleSolved();
+  if(puzzleSolved){
+    $('passwordCard').style.display='block';
+    $('passwordCard').scrollIntoView({behavior:'smooth'});
+  }
+};
+
+/* Save cover image */
+const _saveProfile = saveProfile;
+saveProfile = function(){
+  const data = JSON.parse(localStorage.getItem('user_'+currentUser));
+  const f = $('coverInput').files[0];
+  if(f){
+    const r=new FileReader();
+    r.onload=()=>{
+      data.cover=r.result;
+      localStorage.setItem('user_'+currentUser,JSON.stringify(data));
+      _saveProfile();
+    };
+    r.readAsDataURL(f);
+  } else _saveProfile();
+};
+
+/* Profile popup */
+document.addEventListener('click', e=>{
+  if(e.target.classList.contains('username')){
+    const u=e.target.dataset.user;
+    const d=JSON.parse(localStorage.getItem('user_'+u)||'{}');
+    const p=$('profilePopup');
+    p.innerHTML=`<b>${u}</b><br><img src="${d.pfp||''}" style="width:40px"><br>
+    <img src="${d.cover||''}" style="width:100%"><br>Rank: ${d.rank||'Unranked'}`;
+    p.style.display='block';
+    p.style.left=e.pageX+'px';
+    p.style.top=e.pageY+'px';
+  } else $('profilePopup').style.display='none';
+});
+
+/* Corner images */
+['TL','TR','BL','BR'].forEach(pos=>{
+  db.ref('corners/'+pos).on('value',s=>{
+    if(s.val()) $('corner'+pos).src=s.val();
+  });
+});
+
+/* Leaderboard crowns */
+function addCrowns(){
+  document.querySelectorAll('#lbTable tr').forEach(r=>{
+    const rank=parseInt(r.children[0]?.innerText);
+    if(rank>=1 && rank<=5){
+      const c=document.createElement('div');
+      c.className='crown rank'+rank;
+      c.innerHTML='👑';
+      r.style.position='relative';
+      r.appendChild(c);
+    }
+  });
+}
+setTimeout(addCrowns,1200);
+
+/* Tiny avatars */
+setInterval(()=>{
+  document.querySelectorAll('.username').forEach(u=>{
+    if(u.querySelector('img')) return;
+    const d=JSON.parse(localStorage.getItem('user_'+u.dataset.user)||'{}');
+    if(d.pfp){
+      const i=document.createElement('img');
+      i.src=d.pfp;
+      i.className='tiny-avatar';
+      u.prepend(i);
+    }
+  });
+},2000);
+
+/* Init */
+loadAbout();
+setupAboutAdmin();
+
+/* ================= End admin-upload functions ================= */
+
+</script>
+</body>
+</html>
